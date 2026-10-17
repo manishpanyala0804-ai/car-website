@@ -18,6 +18,7 @@ pipeline {
         stage('Validate Website') {
             steps {
                 sh '''
+                    set -eu
                     test -f index.html
                     echo "Website files validated successfully."
                 '''
@@ -30,20 +31,26 @@ pipeline {
                     sh '''
                         set -eu
 
-                        mkdir -p ~/.ssh
                         ssh -o BatchMode=yes \
                             "$DEPLOY_USER@$DEPLOY_HOST" \
                             "mkdir -p '$WEB_ROOT'"
 
-                        tar --exclude='.git' -czf website.tar.gz .
-                        scp website.tar.gz \
+                        tar -czf "$WORKSPACE/../website-deploy.tar.gz" \
+                            --exclude='.git' \
+                            --exclude='website.tar.gz' \
+                            index.html css images js
+
+                        scp "$WORKSPACE/../website-deploy.tar.gz" \
                             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/website.tar.gz"
 
-                        ssh "$DEPLOY_USER@$DEPLOY_HOST" \
+                        ssh -o BatchMode=yes \
+                            "$DEPLOY_USER@$DEPLOY_HOST" \
                             "tar -xzf /tmp/website.tar.gz -C '$WEB_ROOT' &&
                              rm -f /tmp/website.tar.gz"
 
-                        rm -f website.tar.gz
+                        rm -f "$WORKSPACE/../website-deploy.tar.gz"
+
+                        echo "Website deployed successfully."
                     '''
                 }
             }

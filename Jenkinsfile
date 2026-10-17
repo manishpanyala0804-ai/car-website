@@ -20,6 +20,9 @@ pipeline {
                 sh '''
                     set -eu
                     test -f index.html
+                    test -d css
+                    test -d images
+                    test -d js
                     echo "Website files validated successfully."
                 '''
             }
@@ -38,7 +41,7 @@ pipeline {
                         tar -czf "$WORKSPACE/../website-deploy.tar.gz" \
                             --exclude='.git' \
                             --exclude='website.tar.gz' \
-                            index.html css images js
+                            -- *.html css images js
 
                         scp "$WORKSPACE/../website-deploy.tar.gz" \
                             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/website.tar.gz"
